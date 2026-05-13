@@ -1,12 +1,12 @@
 # نتایج جستجو
 
-- [@khadamatetel_ins](https://t.me/khadamatetel_ins) **@khadamatetel_ins**
+- [@zeous_news](https://t.me/zeous_news) **@zeous_news**
+- [@lige_bartarrr](https://t.me/lige_bartarrr) **@lige_bartarrr**
+- [@creator_nouvelles](https://t.me/creator_nouvelles) **@creator_nouvelles**
 - [@mlyzembot](https://t.me/mlyzembot) **Lyzem Easy Meetings**
-- [@maashhad_harraj](https://t.me/maashhad_harraj) **@maashhad_harraj**
-- [@phishing_666hazi](https://t.me/phishing_666hazi) **@phishing_666hazi**
-- [@my_termux](https://t.me/my_termux) **@my_termux**
-- [@nemone_frosh81](https://t.me/nemone_frosh81) **@nemone_frosh81**
+- [@saobia](https://t.me/saobia) **@saobia**
+- [@akhbar_85](https://t.me/akhbar_85) **@akhbar_85**
+- [@akhbar_one](https://t.me/akhbar_one) **@akhbar_one**
 - [@editorpost_bot](https://t.me/editorpost_bot) **EditorPost Bot**
-- [@iohasioghasohiag](https://t.me/iohasioghasohiag) **@iohasioghasohiag**
-- [@tofang_frosh](https://t.me/tofang_frosh) **@tofang_frosh**
-- [@frohs_tab](https://t.me/frohs_tab) **تبچی فروش** | اعضا: 3
+- [@nmones_77](https://t.me/nmones_77) **@nmones_77**
+- [@akhbar_20302](https://t.me/akhbar_20302) **@akhbar_20302**

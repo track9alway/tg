@@ -69,12 +69,18 @@ jobs:
         run: |
           git config user.name "TG Reader Bot"
           git config user.email "bot@tgreader.local"
-          # دریافت آخرین تغییرات از remote قبل از commit (جلوگیری از خطای reject)
-          git pull --rebase origin main || echo "No remote changes to rebase"
+          # مخفی کردن تغییرات احتمالی قبل از pull
+          git stash push --include-untracked || true
+          # دریافت آخرین تغییرات از remote با rebase (autostash ایمن‌تر)
+          git pull --rebase --autostash origin main || echo "Nothing to rebase"
+          # اگر stash کرده بودیم، pop کنیم
+          git stash pop || true
+          # اضافه و commit
           git add -A
           if [ "${{ github.event.inputs.action }}" == "search" ]; then
             git commit -m "🔍 Search results for: ${{ github.event.inputs.query }}" || echo "Nothing to commit"
           elif [ "${{ github.event.inputs.action }}" == "fetch" ]; then
             git commit -m "📡 Fetched @${{ github.event.inputs.channel }} — $(date +'%Y-%m-%d %H:%M') UTC" || echo "Nothing to commit"
           fi
+          # push نهایی
           git push origin main

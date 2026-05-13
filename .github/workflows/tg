@@ -1,0 +1,78 @@
+name: 📡 Telegram Tools (Search + Fetch)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'نوع عملیات: search برای جستجوی کانال، fetch برای واکشی پیام‌ها'
+        required: true
+        type: choice
+        options:
+          - search
+          - fetch
+      query:
+        description: 'عبارت جستجو (فقط برای action=search الزامی است)'
+        required: false
+        type: string
+      channel:
+        description: 'نام کاربری کانال بدون @ (فقط برای action=fetch الزامی است)'
+        required: false
+        type: string
+      count:
+        description: 'تعداد پیام‌های قابل واکشی (برای fetch، پیش‌فرض 100)'
+        required: false
+        default: '100'
+        type: string
+
+permissions:
+  contents: write   # لازم برای push کردن تغییرات (فایل‌های خروجی)
+
+jobs:
+  run-tool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4 lxml
+
+      # ---------- بخش جستجو ----------
+      - name: 🔍 Search Telegram Channels
+        if: ${{ github.event.inputs.action == 'search' }}
+        run: |
+          python scripts/search_channels.py \
+            --query "${{ github.event.inputs.query }}" \
+            --output "search_results.md"
+        # اسکریپت search_channels.py نتایج را در search_results.md ذخیره می‌کند
+        # (هر نتیجه شامل نام کانال، توضیح، تعداد اعضا و لینک خواهد بود)
+
+      # ---------- بخش واکشی کانال ----------
+      - name: 📡 Fetch Telegram Channel
+        if: ${{ github.event.inputs.action == 'fetch' }}
+        run: |
+          python scripts/fetch_channel.py \
+            --channel "${{ github.event.inputs.channel }}" \
+            --count "${{ github.event.inputs.count }}"
+        # اسکریپت fetch_channel.py محتوای t.me/s را scrape کرده
+        # و در channels/<channel>/ فایل‌های مارک‌داون کامل (با عکس، متن، ویو، ری‌اکشن، لینک دانلود) می‌سازد
+
+      # ---------- ثبت تغییرات در ریپازیتوری ----------
+      - name: 💾 Commit & Push results
+        run: |
+          git config user.name "TG Reader Bot"
+          git config user.email "bot@tgreader.local"
+          git add -A
+          if [ "${{ github.event.inputs.action }}" == "search" ]; then
+            git commit -m "🔍 Search results for: ${{ github.event.inputs.query }}" || echo "Nothing to commit"
+          elif [ "${{ github.event.inputs.action }}" == "fetch" ]; then
+            git commit -m "📡 Fetched @${{ github.event.inputs.channel }} — $(date +'%Y-%m-%d %H:%M') UTC" || echo "Nothing to commit"
+          fi
+          git push

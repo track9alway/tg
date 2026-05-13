@@ -48,7 +48,7 @@ jobs:
       - name: 🔍 Search Telegram Channels
         if: ${{ github.event.inputs.action == 'search' }}
         run: |
-          python scripts/search_channels.py \
+          python script/search_channels.py \
             --query "${{ github.event.inputs.query }}" \
             --output "search_results.md"
         # اسکریپت search_channels.py نتایج را در search_results.md ذخیره می‌کند
@@ -58,7 +58,7 @@ jobs:
       - name: 📡 Fetch Telegram Channel
         if: ${{ github.event.inputs.action == 'fetch' }}
         run: |
-          python scripts/fetch_channel.py \
+          python script/fetch_channel.py \
             --channel "${{ github.event.inputs.channel }}" \
             --count "${{ github.event.inputs.count }}"
         # اسکریپت fetch_channel.py محتوای t.me/s را scrape کرده

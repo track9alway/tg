@@ -1,12 +1,12 @@
 # نتایج جستجو
 
-- [@editorpost_bot](https://t.me/editorpost_bot) **EditorPost Bot**
-- [@yahoo_yahoo_us](https://t.me/yahoo_yahoo_us) **@yahoo_yahoo_us**
-- [@q_news](https://t.me/q_news) **@q_news**
-- [@khabar_tabriz_rurk](https://t.me/khabar_tabriz_rurk) **@khabar_tabriz_rurk**
-- [@lyzemcom](https://t.me/lyzemcom) **@lyzemcom**
-- [@khabar_fooriii](https://t.me/khabar_fooriii) **@khabar_fooriii**
-- [@titreyek_bot](https://t.me/titreyek_bot) **@titreyek_bot**
+- [@puppet_u](https://t.me/puppet_u) **@puppet_u**
+- [@hma_sh](https://t.me/hma_sh) **@hma_sh**
+- [@studiolapota](https://t.me/studiolapota) **@studiolapota**
+- [@arousake_linda](https://t.me/arousake_linda) **@arousake_linda**
+- [@mahak_toys_arosak](https://t.me/mahak_toys_arosak) **@mahak_toys_arosak**
+- [@aroosak_021](https://t.me/aroosak_021) **@aroosak_021**
+- [@donyaye_arusak](https://t.me/donyaye_arusak) **@donyaye_arusak**
 - [@mlyzembot](https://t.me/mlyzembot) **Lyzem Easy Meetings**
-- [@bbc_news_robot](https://t.me/bbc_news_robot) **خبر**
-- [@lyzembot](https://t.me/lyzembot) **LyzemBot**
+- [@eliart](https://t.me/eliart) **@eliart**
+- [@central_fm](https://t.me/central_fm) **عروسک سنتر** | اعضا: 99

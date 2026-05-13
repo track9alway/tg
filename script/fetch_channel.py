@@ -125,23 +125,23 @@ def extract_reactions(wrap):
 
 def extract_message_data(wrap):
     """استخراج کامل اطلاعات یک پیام از المنت HTML"""
-    data = {}
+    inner = wrap.select_one('.tgme_widget_message')
+    if not inner:
+        return None
 
-    # شناسه پیام
-    data_post = wrap.get('data-post', '')
-    # فرمت: channel/12345
+    data_post = inner.get('data-post', '')
     parts = data_post.split('/')
-    if len(parts) == 2 and parts[1].isdigit():
-        data['id'] = int(parts[1])
-    else:
-        return None  # پیام نامعتبر
+    if not (len(parts) == 2 and parts[1].isdigit()):
+        return None
+
+    data = {'id': int(parts[1])}
 
     # متن
-    text_el = wrap.select_one('.tgme_widget_message_text')
+    text_el = inner.select_one('.tgme_widget_message_text')
     data['text'] = text_el.get_text('\n', strip=True) if text_el else ''
 
     # رسانه
-    media, media_type, media_name, download_link = extract_media(wrap)
+    media, media_type, media_name, download_link = extract_media(wrap)  # wrap را می‌فرستیم
     data['media'] = media
     data['media_type'] = media_type
     data['media_name'] = media_name
@@ -153,44 +153,38 @@ def extract_message_data(wrap):
     # واکنش‌ها
     data['reactions'] = extract_reactions(wrap)
 
-    # تاریخ (اختیاری) - می‌توان از تگ time استفاده کرد
-    time_tag = wrap.select_one('time')
+    # تاریخ (اختیاری)
+    time_tag = inner.select_one('time')
     if time_tag and time_tag.get('datetime'):
         data['date'] = time_tag['datetime']
     else:
         data['date'] = None
 
     return data
-
 def parse_page(html):
-    """پارس صفحه و بازگرداندن لیست پیام‌ها + لینک before"""
     soup = BeautifulSoup(html, 'lxml')
-    msgs = soup.select('.tgme_widget_message_wrap')
+    msg_wraps = soup.select('.tgme_widget_message_wrap')
     messages = []
-    for w in msgs:
+    for w in msg_wraps:
         msg_data = extract_message_data(w)
         if msg_data:
             messages.append(msg_data)
 
-    # یافتن لینک "older messages"
-    # معمولاً در div.tgme_widget_message_bubble_container یک a با href حاوی ?before=
-    page_before = None
-    # جستجوی لینک "before"
-    for a in soup.find_all('a', href=True):
-        href = a['href']
-        if 'before=' in href:
-            # href ممکن است نسبی باشد
-            page_before = urljoin(BASE_URL, href)
-            break
-    return messages, page_before
+    # یافتن لینک "before" از id پیام‌ها (مطمئن‌تر)
+    if messages:
+        min_id = min(m['id'] for m in messages)
+        # لینک صفحه قبل: t.me/s/<channel>?before=<min_id>
+        # ولی ما در get_messages از current_url استفاده می‌کنیم،
+        # پس همین min_id را به‌عنوان before بعدی برمی‌گردانیم.
+        page_before = min_id
+    else:
+        page_before = None
 
+    return messages, page_before
 # ----------------------------------------------------------------------
 #  تابع اصلی دریافت پیام‌ها با پیمایش
 # ----------------------------------------------------------------------
 def get_messages(channel, count=100):
-    """
-    دریافت تا count پیام از کانال با دنبال کردن لینک‌های 'before'
-    """
     base_url = f"{BASE_URL}{channel}"
     all_messages = []
     current_url = base_url
@@ -203,7 +197,7 @@ def get_messages(channel, count=100):
             print("❌ درخواست ناموفق، توقف.")
             break
 
-        page_msgs, next_before = parse_page(resp.text)
+        page_msgs, before_id = parse_page(resp.text)
         new_msgs = 0
         for msg in page_msgs:
             if msg['id'] not in seen_ids:
@@ -213,17 +207,17 @@ def get_messages(channel, count=100):
 
         print(f"   ✔ {len(page_msgs)} پیام در این صفحه، {new_msgs} پیام جدید (کل: {len(all_messages)})")
 
-        if not next_before:
+        if not before_id:
             print("🏁 به ابتدای کانال رسیدیم.")
             break
 
-        # تاخیر تصادفی برای جلوگیری از تشخیص ربات
+        # ساخت URL با پارامتر before=id
+        current_url = f"{base_url}?before={before_id}"
+
+        # تاخیر تصادفی
         delay = random.uniform(1.5, 3.0)
         time.sleep(delay)
 
-        current_url = next_before
-
-    # برگرداندن فقط تعداد خواسته شده
     return all_messages[:count]
 
 # ----------------------------------------------------------------------

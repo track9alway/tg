@@ -1,18 +1,30 @@
-name: Search Automation
+name: Search or Download
 
 on:
   workflow_dispatch:
     inputs:
-      search_query:
-        description: 'عبارت جستجو'
+      mode:
+        description: 'نوع عملیات'
         required: true
+        default: 'search'
+        type: choice
+        options:
+          - search
+          - download
+      search_query:
+        description: 'عبارت جستجو (در حالت search)'
+        required: false
+        type: string
+      video_url:
+        description: 'آدرس ویدیو (در حالت download)'
+        required: false
         type: string
 
 permissions:
   contents: write
 
 jobs:
-  search:
+  process:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -28,9 +40,11 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run search script
+      - name: Run script
         run: |
-          python scraper.py "${{ github.event.inputs.search_query }}"
+          python scraper.py --mode "${{ github.event.inputs.mode }}" \
+            --query "${{ github.event.inputs.search_query }}" \
+            --url "${{ github.event.inputs.video_url }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,6 +52,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results.json
-          git diff --staged --quiet || git commit -m "ذخیره نتایج جستجو: ${{ github.event.inputs.search_query }}"
+          git add results.json downloads/ || true
+          git diff --staged --quiet || git commit -m "به‌روزرسانی نتایج: ${{ github.event.inputs.mode }}"
           git push

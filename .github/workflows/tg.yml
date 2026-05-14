@@ -1,4 +1,4 @@
-name: Search or Download
+name: Search or Download and Commit
 
 on:
   workflow_dispatch:
@@ -40,7 +40,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run script
+      - name: Run script (search or download)
         run: |
           python scraper.py --mode "${{ github.event.inputs.mode }}" \
             --query "${{ github.event.inputs.search_query }}" \
@@ -48,10 +48,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and push results
+      - name: Commit and push results (including downloaded video)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add results.json downloads/ || true
-          git diff --staged --quiet || git commit -m "به‌روزرسانی نتایج: ${{ github.event.inputs.mode }}"
+          git diff --staged --quiet || git commit -m "به‌روزرسانی: ${{ github.event.inputs.mode }} - ${{ github.event.inputs.search_query || github.event.inputs.video_url }}"
           git push

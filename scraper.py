@@ -8,7 +8,7 @@ from urllib.parse import quote_plus, urlparse
 from datetime import datetime
 import hashlib
 
-BASE_URL = "https://www.pornhub.com"  # نام سایت با سانسور
+BASE_URL = "https://www.pornhub.com" 
 DOWNLOAD_DIR = "downloads"
 
 def ensure_download_dir():

@@ -1,86 +1,43 @@
-name: 📡 Telegram Tools (Search + Fetch)
+name: Search Automation
 
 on:
   workflow_dispatch:
     inputs:
-      action:
-        description: 'نوع عملیات: search برای جستجوی کانال، fetch برای واکشی پیام‌ها'
+      search_query:
+        description: 'عبارت جستجو'
         required: true
-        type: choice
-        options:
-          - search
-          - fetch
-      query:
-        description: 'عبارت جستجو (فقط برای action=search الزامی است)'
-        required: false
-        type: string
-      channel:
-        description: 'نام کاربری کانال بدون @ (فقط برای action=fetch الزامی است)'
-        required: false
-        type: string
-      count:
-        description: 'تعداد پیام‌های قابل واکشی (برای fetch، پیش‌فرض 100)'
-        required: false
-        default: '100'
         type: string
 
 permissions:
-  contents: write   # لازم برای push کردن تغییرات (فایل‌های خروجی)
+  contents: write
 
 jobs:
-  run-tool:
+  search:
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install requests beautifulsoup4 lxml
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      # ---------- بخش جستجو ----------
-      - name: 🔍 Search Telegram Channels
-        if: ${{ github.event.inputs.action == 'search' }}
+      - name: Run search script
         run: |
-          python script/search_channels.py \
-            --query "${{ github.event.inputs.query }}" \
-            --output "search_results.md"
-        # اسکریپت search_channels.py نتایج را در search_results.md ذخیره می‌کند
-        # (هر نتیجه شامل نام کانال، توضیح، تعداد اعضا و لینک خواهد بود)
+          python scraper.py "${{ github.event.inputs.search_query }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ---------- بخش واکشی کانال ----------
-      - name: 📡 Fetch Telegram Channel
-        if: ${{ github.event.inputs.action == 'fetch' }}
+      - name: Commit and push results
         run: |
-          python script/fetch_channel.py \
-            --channel "${{ github.event.inputs.channel }}" \
-            --count "${{ github.event.inputs.count }}"
-        # اسکریپت fetch_channel.py محتوای t.me/s را scrape کرده
-        # و در channels/<channel>/ فایل‌های مارک‌داون کامل (با عکس، متن، ویو، ری‌اکشن، لینک دانلود) می‌سازد
-
-      # ---------- ثبت تغییرات در ریپازیتوری ----------
-      - name: 💾 Commit & Push results
-        run: |
-          git config user.name "TG Reader Bot"
-          git config user.email "bot@tgreader.local"
-          # مخفی کردن تغییرات احتمالی قبل از pull
-          git stash push --include-untracked || true
-          # دریافت آخرین تغییرات از remote با rebase (autostash ایمن‌تر)
-          git pull --rebase --autostash origin main || echo "Nothing to rebase"
-          # اگر stash کرده بودیم، pop کنیم
-          git stash pop || true
-          # اضافه و commit
-          git add -A
-          if [ "${{ github.event.inputs.action }}" == "search" ]; then
-            git commit -m "🔍 Search results for: ${{ github.event.inputs.query }}" || echo "Nothing to commit"
-          elif [ "${{ github.event.inputs.action }}" == "fetch" ]; then
-            git commit -m "📡 Fetched @${{ github.event.inputs.channel }} — $(date +'%Y-%m-%d %H:%M') UTC" || echo "Nothing to commit"
-          fi
-          # push نهایی
-          git push origin main
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results.json
+          git diff --staged --quiet || git commit -m "ذخیره نتایج جستجو: ${{ github.event.inputs.search_query }}"
+          git push

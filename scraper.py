@@ -4,10 +4,16 @@ import json
 import sys
 import os
 import argparse
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 from datetime import datetime
+import hashlib
 
-BASE_URL = "https://www.p**nsfw**hub.com"  # نام سایت با سانسور
+BASE_URL = "https://www.pornhub.com"  # نام سایت با سانسور
+DOWNLOAD_DIR = "downloads"
+
+def ensure_download_dir():
+    if not os.path.exists(DOWNLOAD_DIR):
+        os.makedirs(DOWNLOAD_DIR)
 
 def search(query):
     encoded_query = quote_plus(query)
@@ -36,29 +42,66 @@ def search(query):
     }
 
 def download_video(video_url):
-    # بررسی می‌کنیم که URL معتبر باشد
+    """دانلود فایل ویدیو و ذخیره آن در پوشه downloads"""
+    ensure_download_dir()
+    
+    # تکمیل URL در صورت نیاز
     if not video_url.startswith(('http://', 'https://')):
         video_url = BASE_URL + video_url
-    # دریافت صفحه ویدیو برای استخراج لینک دانلود (ساده شده)
+    
+    # دریافت صفحه ویدیو برای استخراج لینک واقعی دانلود
+    # (بخش اصلی که باید بر اساس ساختار سایت تکمیل شود)
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
-        resp = requests.get(video_url, headers=headers, timeout=30)
-        resp.raise_for_status()
+        page_resp = requests.get(video_url, headers=headers, timeout=30)
+        page_resp.raise_for_status()
     except Exception as e:
         return {"error": f"خطا در دریافت صفحه: {str(e)}", "url": video_url}
     
-    # در اینجا باید لینک واقعی فایل ویدیو استخراج شود.
-    # به دلیل محدودیت‌های امنیتی و سانسور، فقط ساختار کلی ارائه می‌شود.
-    # شما می‌توانید با بررسی الگوهای موجود در سورس صفحه، لینک دانلود را بیابید.
-    # مثلاً ممکن است در تگ‌های <video> یا <source> یا در متغیرهای javascript باشد.
-    # برای نمونه، یک لینک ساختگی برمی‌گردانیم:
-    return {
-        "mode": "download",
-        "requested_url": video_url,
-        "timestamp": datetime.utcnow().isoformat(),
-        "download_link": None,  # در عمل لینک واقعی جایگزین شود
-        "message": "لطفاً کد استخراج لینک دانلود را بر اساس ساختار سایت تکمیل کنید."
-    }
+    # در اینجا باید لینک دانلود واقعی را از صفحه استخراج کنید.
+    # به دلیل محدودیت‌های امنیتی و سانسور، یک الگوی عمومی ارائه می‌شود.
+    # معمولاً لینک دانلود در تگ‌های <video> یا <source> یا در یک متغیر جاوااسکریپت است.
+    # نمونه فرضی:
+    soup = BeautifulSoup(page_resp.text, 'html.parser')
+    download_link = None
+    # مثال: پیدا کردن اولین تگ video و استخراج src
+    video_tag = soup.find('video')
+    if video_tag and video_tag.get('src'):
+        download_link = video_tag['src']
+    elif soup.find('source'):
+        download_link = soup.find('source').get('src')
+    
+    if not download_link:
+        return {"error": "لینک دانلود یافت نشد", "url": video_url}
+    
+    if not download_link.startswith('http'):
+        download_link = BASE_URL + download_link
+    
+    # دانلود فایل
+    try:
+        video_response = requests.get(download_link, headers=headers, stream=True, timeout=60)
+        video_response.raise_for_status()
+        
+        # ایجاد نام فایل بر اساس URL یا هش
+        url_hash = hashlib.md5(video_url.encode()).hexdigest()[:8]
+        filename = f"{url_hash}.mp4"
+        filepath = os.path.join(DOWNLOAD_DIR, filename)
+        
+        with open(filepath, 'wb') as f:
+            for chunk in video_response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        file_size = os.path.getsize(filepath)
+        return {
+            "mode": "download",
+            "requested_url": video_url,
+            "timestamp": datetime.utcnow().isoformat(),
+            "downloaded_file": filepath,
+            "file_size_bytes": file_size,
+            "status": "success"
+        }
+    except Exception as e:
+        return {"error": f"خطا در دانلود فایل: {str(e)}", "url": video_url}
 
 def save_result(data):
     output_file = "results.json"
